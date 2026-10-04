@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Renewals</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Renewals</h1>
+        <div class="sub" id="today"></div>
+      </div>
+      <button id="menuBtn" aria-label="Data and backups">⋯ Data</button>
+    </header>
+
+    <div id="banner"></div>
+    <div class="stats" id="stats"></div>
+
+    <div class="toolbar">
+      <input id="search" type="search" placeholder="Search name, provider, notes…" aria-label="Search">
+      <select id="catFilter" aria-label="Category"><option value="">All categories</option></select>
+    </div>
+
+    <div class="list" id="list"></div>
+  </div>
+
+  <button class="primary fab" id="addBtn">+ Add item</button>
+
+  <!-- Add / edit -->
+  <dialog id="editDlg">
+    <form class="dlg" id="form">
+      <h2 id="formTitle">Add item</h2>
+      <div class="templates" id="templates"></div>
+      <div class="grid">
+        <label class="full">Name<input name="name" required placeholder="e.g. Civic — auto insurance"></label>
+        <label>Category<select name="category"></select></label>
+        <label>Expires on<input name="expires" type="date" required></label>
+        <label>Renews every
+          <select name="cycle">
+            <option value="0">One-time / irregular</option>
+            <option value="1">1 month</option>
+            <option value="3">3 months</option>
+            <option value="6">6 months</option>
+            <option value="12">1 year</option>
+            <option value="24">2 years</option>
+            <option value="48">4 years</option>
+            <option value="60">5 years</option>
+            <option value="96">8 years</option>
+            <option value="120">10 years</option>
+          </select>
+        </label>
+        <label>Remind me (days before)<input name="remind" type="number" min="0" max="730" required></label>
+        <label>Provider / agency<input name="provider" placeholder="e.g. Progressive, State DMV"></label>
+        <label>Phone<input name="phone" type="tel" placeholder="1-800-…"></label>
+        <label class="full">Renewal link<input name="url" type="url" placeholder="https://…"></label>
+        <label class="full">Notes — what you'll need to renew<textarea name="notes" placeholder="Emissions test, proof of insurance, new photo…"></textarea></label>
+      </div>
+      <div class="dlg-foot">
+        <button type="button" id="cancelEdit">Cancel</button>
+        <button type="submit" class="primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Data menu -->
+  <dialog id="menuDlg">
+    <div class="dlg">
+      <h2>Data</h2>
+      <p class="hint">Everything is saved in this browser only. Export a backup now and then.</p>
+      <div class="menu">
+        <button id="exportJson">⬇ Export backup (.json)</button>
+        <button id="importJson">⬆ Import backup (.json)</button>
+        <button id="exportIcs">📅 Export to calendar (.ics)</button>
+        <button id="loadSamples">✨ Load sample items</button>
+        <button id="clearAll" class="danger">🗑 Delete all items</button>
+      </div>
+      <input type="file" id="fileIn" accept="application/json,.json" hidden>
+      <div class="dlg-foot"><button id="closeMenu">Close</button></div>
+    </div>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
