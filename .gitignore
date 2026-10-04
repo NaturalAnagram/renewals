@@ -1,0 +1,6 @@
+# Personal data exported from the app — never commit
+renewals-backup-*.json
+*.ics
+
+# macOS
+.DS_Store
