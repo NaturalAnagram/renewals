@@ -25,6 +25,15 @@ const TEMPLATES = [
 const STATUS_LABEL = { expired: 'Expired', soon: 'Renew now', upcoming: 'Coming up', ok: 'OK' };
 const UPCOMING_DAYS = 90;
 
+// Status icons, so statuses differ by shape as well as color.
+const svg = body => `<svg class="si" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
+const STATUS_ICON = {
+  expired:  svg('<path d="M8 2h8l6 6v8l-6 6H8l-6-6V8z"/><path d="M12 7v6M12 17h.01"/>'),
+  soon:     svg('<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>'),
+  upcoming: svg('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),
+  ok:       svg('<path d="M5 12.5l4.5 4.5L19 7.5"/>'),
+};
+
 const $ = sel => document.querySelector(sel);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -119,7 +128,7 @@ function renderStats() {
   items.forEach(it => counts[statusOf(it)]++);
   $('#stats').innerHTML = Object.keys(counts).map(key => `
     <button class="stat ${key} ${ui.status === key ? 'active' : ''}" data-status="${key}" aria-pressed="${ui.status === key}">
-      <b>${counts[key]}</b><span>${STATUS_LABEL[key]}</span>
+      <b>${counts[key]}</b><span>${STATUS_ICON[key]}${STATUS_LABEL[key]}</span>
     </button>`).join('');
 }
 
@@ -177,7 +186,7 @@ function renderItem(it) {
           <div class="name">${esc(it.name)}</div>
           <div class="meta">${esc(it.provider || cat.label)} · ${formatDate(it.expires)}</div>
         </div>
-        <div class="pill">${STATUS_LABEL[status]}<small>${relative(daysUntil(it.expires))}</small></div>
+        <div class="pill">${STATUS_ICON[status]}${STATUS_LABEL[status]}<small>${relative(daysUntil(it.expires))}</small></div>
       </button>
       <div class="details">
         <dl>${details.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>
