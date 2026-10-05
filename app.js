@@ -350,6 +350,20 @@ $('#exportIcs').addEventListener('click', () => {
 
   const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
   const icsText = s => String(s || '').replace(/[\\;,]/g, m => '\\' + m).replace(/\r?\n/g, '\\n');
+  // Alert at 9 AM, `days` before the (all-day) expiry. Relative to the event's midnight start.
+  const icsTrigger = days => days > 0 ? `-P${days - 1}DT15H` : 'PT9H';
+  // RFC 5545: lines over 75 octets are folded with CRLF + space, without splitting a UTF-8 character.
+  const utf8Len = s => new TextEncoder().encode(s).length;
+  const fold = line => {
+    const out = [];
+    let cur = '', limit = 75;
+    for (const ch of line) {
+      if (utf8Len(cur + ch) > limit) { out.push(cur); cur = ''; limit = 74; }
+      cur += ch;
+    }
+    out.push(cur);
+    return out.join('\r\n ');
+  };
 
   const events = upcoming.map(it => {
     const start = it.expires.replace(/-/g, '');
@@ -374,10 +388,10 @@ $('#exportIcs').addEventListener('click', () => {
       'BEGIN:VALARM',
       'ACTION:DISPLAY',
       `DESCRIPTION:${icsText(`Renew ${it.name}`)}`,
-      `TRIGGER:-P${Number(it.remind) || 0}D`,
+      `TRIGGER:${icsTrigger(Number(it.remind) || 0)}`,
       'END:VALARM',
       'END:VEVENT',
-    ].filter(Boolean).join('\r\n');
+    ].filter(Boolean).map(fold).join('\r\n');
   });
 
   download('renewals.ics',
