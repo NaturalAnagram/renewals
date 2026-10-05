@@ -24,6 +24,8 @@ const TEMPLATES = [
 
 const STATUS_LABEL = { expired: 'Expired', soon: 'Renew now', upcoming: 'Coming up', ok: 'OK' };
 const UPCOMING_DAYS = 90;
+// List order: most urgent status first, then soonest expiry within each status.
+const STATUS_RANK = { expired: 0, soon: 1, upcoming: 2, ok: 3 };
 
 // Status icons, so statuses differ by shape as well as color.
 const svg = body => `<svg class="si" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
@@ -152,7 +154,7 @@ function renderList() {
     .filter(it => !ui.status || statusOf(it) === ui.status)
     .filter(it => !ui.category || it.category === ui.category)
     .filter(it => !q || [it.name, it.provider, it.notes].join(' ').toLowerCase().includes(q))
-    .sort((a, b) => a.expires.localeCompare(b.expires));
+    .sort((a, b) => STATUS_RANK[statusOf(a)] - STATUS_RANK[statusOf(b)] || a.expires.localeCompare(b.expires));
 
   if (!shown.length) {
     list.innerHTML = '<div class="empty">No items match these filters.</div>';
