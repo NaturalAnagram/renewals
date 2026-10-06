@@ -157,6 +157,8 @@ async function signOut() {
   await syncNow();
   if (sync.version !== sync.syncedVersion &&
       !confirm("Some changes on this device haven't synced yet and will be lost. Sign out anyway?")) return;
+  // Reminders for this account shouldn't keep arriving on a signed-out device.
+  await disablePush().catch(e => console.error("Couldn't turn off notifications", e));
   await sb.auth.signOut({ scope: 'local' });
   items = [];
   deleted = {};

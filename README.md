@@ -19,3 +19,24 @@ Or serve it locally (handy for testing on your phone over Wi-Fi):
 python3 -m http.server 5173
 ```
 then visit http://localhost:5173.
+
+## Push reminders
+Turn them on per device from **Data → Notifications** (signed in). On Android, use Chrome or the
+installed app; on iPhone, the app must be installed to the Home Screen. Reminders arrive at 9 AM local
+time when an item enters its "remind me" window, then 7 days, 1 day, and on the day it expires.
+Marking an item renewed moves its date, so its reminders stop until the next cycle.
+
+The reminders are sent by a Supabase Edge Function, `supabase/functions/send-reminders`, which runs
+hourly. One-time setup in the Supabase dashboard:
+1. **Database → Extensions:** enable `pg_cron` and `pg_net`.
+2. **Edge Functions → Secrets:** add `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` and `CRON_SECRET` from
+   `.secrets/push.env` (gitignored; never commit it), and `VAPID_SUBJECT` = `mailto:` + your email.
+3. **Edge Functions → Deploy a new function → Via Editor:** name it `send-reminders`, paste in
+   `supabase/functions/send-reminders/index.ts`, deploy, then turn **Verify JWT** off in its settings.
+4. **Project Settings → Vault:** add a secret named `reminders_cron_secret` with the `CRON_SECRET` value.
+5. **SQL Editor:** run `supabase/push.sql`.
+
+To test without waiting for 9 AM, call the function with `?anyHour=1` and the cron secret:
+```bash
+curl -X POST "https://mwalbyzlcfbonuqgfule.supabase.co/functions/v1/send-reminders?anyHour=1" -H "Authorization: Bearer $(grep CRON_SECRET .secrets/push.env | cut -d= -f2)"
+```

@@ -59,7 +59,7 @@ Decisions so far:
   with login so your data syncs between your PC and phone. I recommend **Supabase**: free tier,
   built-in login, and each user can only read their own rows. Then make it an installable PWA
   (a home-screen icon that also works offline).
-- **Phase 3 — later ideas:** email/push reminders, document photos, renewal history, sharing with a household member.
+- **Phase 3 — later ideas:** email reminders (push reminders are done), document photos, renewal history, sharing with a household member.
 
 ## Build steps (once you approve)
 1. Move the session to `~/code/renewals` and copy over the draft PLAN.md, updated to match this plan.

@@ -4,3 +4,6 @@ renewals-backup-*.json
 
 # macOS
 .DS_Store
+
+# Push reminder secrets (VAPID private key, cron secret)
+.secrets/

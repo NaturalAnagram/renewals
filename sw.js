@@ -3,10 +3,10 @@
 // while online, and the cached copy is used when offline (or when the network is too slow).
 // Supabase API calls are never cached; sync.js handles being offline.
 
-const CACHE = 'renewals-v1';
+const CACHE = 'renewals-v2';
 const SUPABASE_JS = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js';
 const SHELL = [
-  './', 'index.html', 'styles.css', 'app.js', 'sync.js', 'manifest.webmanifest',
+  './', 'index.html', 'styles.css', 'app.js', 'sync.js', 'push.js', 'manifest.webmanifest',
   'icons/icon.svg', 'icons/icon-192.png', 'icons/apple-touch-icon.png', SUPABASE_JS,
 ];
 const NETWORK_TIMEOUT_MS = 4000;
@@ -33,6 +33,27 @@ self.addEventListener('fetch', event => {
   } else if (url.origin === location.origin) {
     event.respondWith(networkFirst(req));
   }
+});
+
+// Reminders from the send-reminders function (see push.js). They arrive with the app closed.
+// The tag is the item's id, so a newer reminder for an item replaces the older one.
+self.addEventListener('push', event => {
+  const msg = event.data?.json() || {};
+  event.waitUntil(self.registration.showNotification(msg.title || 'Renewals', {
+    body: msg.body || '',
+    tag: msg.tag,
+    icon: 'icons/icon-192.png',
+  }));
+});
+
+// Tapping a reminder opens the app, or brings it forward if it's already open.
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windows => {
+      const open = windows.find(w => w.url.startsWith(self.registration.scope));
+      return open ? open.focus() : self.clients.openWindow(self.registration.scope);
+    }));
 });
 
 async function networkFirst(req) {

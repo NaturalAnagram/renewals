@@ -190,6 +190,7 @@ textarea { min-height: 70px; resize: vertical; }
 /* Account / sync section at the top of the Data menu */
 .account { padding-bottom: 14px; margin-bottom: 14px; border-bottom: 1px solid var(--line); }
 .account .hint b { color: var(--text); font-weight: 600; word-break: break-all; }
+.account h3 { margin: 0 0 6px; font-size: 15px; }
 .signin { display: flex; gap: 8px; flex-wrap: wrap; }
 .signin input {
   flex: 1;
