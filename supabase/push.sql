@@ -34,6 +34,13 @@ create table public.push_sent (
 
 alter table public.push_sent enable row level security;
 
+-- The send-reminders function uses the project's secret key (the service_role). New tables aren't
+-- exposed to the Data API automatically, so grant it what it needs: read everyone's items and
+-- subscriptions, delete dead subscriptions, and record sent reminders.
+grant select on public.items to service_role;
+grant select, delete on public.push_subscriptions to service_role;
+grant select, insert, delete on public.push_sent to service_role;
+
 -- Run the send-reminders function every hour. It only sends to devices where it's 9 AM local time.
 -- Needs the pg_cron and pg_net extensions (Database → Extensions), and a Vault secret named
 -- reminders_cron_secret holding the same value as the function's CRON_SECRET.

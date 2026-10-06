@@ -4,7 +4,7 @@
 // Each reminder goes out once per device (push_sent). Expired items get nothing further.
 //
 // Secrets: VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT (mailto:you@example.com), CRON_SECRET.
-// SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are provided automatically.
+// SUPABASE_URL and SUPABASE_SECRET_KEYS are provided automatically.
 // Deploy with "Verify JWT" off; the CRON_SECRET check below is what guards it.
 // Add ?anyHour=1 to the URL to skip the 9 AM check when testing.
 
@@ -20,7 +20,7 @@ Deno.serve(async req => {
   }
   const anyHour = new URL(req.url).searchParams.has('anyHour');
   webpush.setVapidDetails(env('VAPID_SUBJECT'), env('VAPID_PUBLIC_KEY'), env('VAPID_PRIVATE_KEY'));
-  const db = createClient(env('SUPABASE_URL'), env('SUPABASE_SERVICE_ROLE_KEY'));
+  const db = createClient(env('SUPABASE_URL'), secretKey());
 
   const { data: subs, error: subsError } = await db.from('push_subscriptions').select('*');
   if (subsError) throw subsError;
@@ -71,6 +71,18 @@ Deno.serve(async req => {
   await db.from('push_sent').delete().lt('expires', daysAgo(60));
   return Response.json({ devices: due.length, sent: count });
 });
+
+// A secret API key (bypasses Row Level Security, so it can read every user's items).
+// SUPABASE_SECRET_KEYS is a JSON object of the project's secret keys; the legacy service role
+// key is the fallback for projects that still use it.
+function secretKey() {
+  try {
+    const keys = JSON.parse(env('SUPABASE_SECRET_KEYS'));
+    const key = keys.default ?? Object.values(keys)[0];
+    if (key) return key as string;
+  } catch { /* not set */ }
+  return env('SUPABASE_SERVICE_ROLE_KEY');
+}
 
 // Which reminder an item is at, as days before expiry, or null if it isn't due one.
 // Using the closest point at or after today means a missed run (or an item added partway
