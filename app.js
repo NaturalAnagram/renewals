@@ -472,3 +472,6 @@ $('#clearAll').addEventListener('click', () => {
 });
 
 render();
+
+// Offline support for the installed app (see sw.js).
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');

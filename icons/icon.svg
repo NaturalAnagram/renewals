@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- App icon: a renewal arrow around a check. The PNG icons are rendered from this file. -->
+  <rect width="512" height="512" rx="112" fill="#2f5d50"/>
+  <g fill="none" stroke="#fff" stroke-width="34" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M346 148.8 A140 140 0 1 1 214 122.5"/>
+    <path d="M200 296 l40 40 l78 -88"/>
+  </g>
+  <path d="M260 108 L189 88.5 L212.5 165 Z" fill="#fff" stroke="#fff" stroke-width="10" stroke-linejoin="round"/>
+</svg>
