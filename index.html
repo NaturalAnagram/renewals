@@ -11,7 +11,7 @@
     <header>
       <div>
         <h1>Renewals</h1>
-        <div class="sub" id="today"></div>
+        <div class="sub"><span id="today"></span><span id="syncState"></span></div>
       </div>
       <button id="menuBtn" aria-label="Data and backups">⋯ Data</button>
     </header>
@@ -69,7 +69,7 @@
   <dialog id="menuDlg">
     <div class="dlg">
       <h2>Data</h2>
-      <p class="hint">Everything is saved in this browser only. Export a backup now and then.</p>
+      <section class="account" id="account"></section>
       <div class="menu">
         <button id="exportJson">⬇ Export backup (.json)</button>
         <button id="importJson">⬆ Import backup (.json)</button>
@@ -82,6 +82,9 @@
     </div>
   </dialog>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"
+    integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
   <script src="app.js"></script>
+  <script src="sync.js"></script>
 </body>
 </html>

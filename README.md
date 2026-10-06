@@ -3,11 +3,12 @@
 A simple tracker for things that expire — insurance, licenses, passports, vehicle tabs — with
 when each one expires and how to renew it.
 
-**Status:** v1 — local-only, plain HTML/CSS/JS. See [PLAN.md](PLAN.md).
+**Status:** phase 2 — plain HTML/CSS/JS, hosted on GitHub Pages, synced with Supabase. See [PLAN.md](PLAN.md).
 
 ## Live site
 https://naturalanagram.github.io/renewals/ — served by GitHub Pages from `main`; every push to `main` redeploys it.
-Data is still per-browser until sync is added (phase 2), so use **Export / Import backup** to move items between devices.
+Sign in from **Data** (an emailed sign-in link) to sync your items across devices through Supabase.
+Signed out, everything is saved in that browser only.
 
 ## Run it locally
 Open `index.html` in a browser. Your data is stored in that browser only; use **Data → Export backup**

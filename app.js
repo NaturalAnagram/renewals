@@ -1,6 +1,7 @@
-// Renewals — v1 (local only). Data lives in this browser's localStorage.
+// Renewals. Data lives in this browser's localStorage; sync.js mirrors it to Supabase when signed in.
 
 const STORAGE_KEY = 'renewals.v1';
+const DELETED_KEY = 'renewals.v1.deleted';  // { id: deletedAt } so deletes reach other devices
 
 const CATEGORIES = {
   vehicle:   { label: 'Vehicle',     icon: '🚗' },
@@ -40,20 +41,40 @@ const $ = sel => document.querySelector(sel);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const uid = () => Math.random().toString(36).slice(2, 10);
+const now = () => new Date().toISOString();
 
 let items = loadItems();
+let deleted = loadDeleted();
 const ui = { open: null, status: '', category: '', query: '', editing: null };
 
 // ---------- storage ----------
 
+// Every item carries updatedAt so sync can tell which copy of an item is newer.
 function loadItems() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
-  catch { return []; }
+  try {
+    const stamp = now();
+    return (JSON.parse(localStorage.getItem(STORAGE_KEY)) || []).map(it => ({ updatedAt: stamp, ...it }));
+  } catch { return []; }
 }
 
-function saveItems() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); }
-  catch { showBanner("Couldn't save in this browser. Export a backup so you don't lose changes."); }
+function loadDeleted() {
+  try { return JSON.parse(localStorage.getItem(DELETED_KEY)) || {}; }
+  catch { return {}; }
+}
+
+function removeItems(ids) {
+  const stamp = now();
+  ids.forEach(id => { deleted[id] = stamp; });
+  items = items.filter(x => !ids.includes(x.id));
+}
+
+// Writes to this browser. `fromSync` is set when sync.js applies merged data, so it doesn't sync again.
+function saveItems({ fromSync = false } = {}) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    localStorage.setItem(DELETED_KEY, JSON.stringify(deleted));
+  } catch { showBanner("Couldn't save in this browser. Export a backup so you don't lose changes."); }
+  if (!fromSync && typeof queueSync === 'function') queueSync();
 }
 
 // ---------- dates (local time, day precision) ----------
@@ -249,6 +270,7 @@ form.addEventListener('submit', e => {
   data.name = data.name.trim();
   data.cycle = Number(data.cycle) || 0;
   data.remind = Number(data.remind) || 0;
+  data.updatedAt = now();
 
   if (ui.editing) {
     Object.assign(items.find(x => x.id === ui.editing), data);
@@ -279,7 +301,7 @@ document.addEventListener('click', e => {
   } else if (d.delete) {
     const it = items.find(x => x.id === d.delete);
     if (confirm(`Delete "${it.name}"?`)) {
-      items = items.filter(x => x.id !== d.delete);
+      removeItems([d.delete]);
       saveItems();
       render();
     }
@@ -303,6 +325,7 @@ function markRenewed(it) {
   while (daysUntil(next) < 0) next = addMonths(next, it.cycle);
   if (confirm(`Mark "${it.name}" as renewed?\n\nNew expiry: ${formatDate(next)}\n(You can edit the exact date afterwards.)`)) {
     it.expires = next;
+    it.updatedAt = now();
     saveItems();
     render();
   }
@@ -345,8 +368,10 @@ $('#fileIn').addEventListener('change', async e => {
 
     const replace = items.length === 0 || confirm(
       `Found ${incoming.length} item(s).\n\nOK = replace your current ${items.length} item(s)\nCancel = add them to your current list`);
-    const cleaned = incoming.map(x => ({ ...x, id: replace && x.id ? x.id : uid() }));
-    items = replace ? cleaned : items.concat(cleaned);
+    const cleaned = incoming.map(x => ({ ...x, id: replace && x.id ? x.id : uid(), updatedAt: now() }));
+    if (replace) removeItems(items.map(x => x.id).filter(id => !cleaned.some(x => x.id === id)));
+    items = items.filter(x => !cleaned.some(c => c.id === x.id)).concat(cleaned);
+    cleaned.forEach(x => delete deleted[x.id]);
     saveItems();
     render();
     $('#menuDlg').close();
@@ -427,7 +452,7 @@ function loadSamples() {
       provider: 'State DMV', notes: 'Need proof of insurance + emissions test (if required).' },
     { name: 'Apartment lease', category: 'home', expires: inDays(75), cycle: 12, remind: 60,
       provider: 'Property manager', notes: 'Give 60 days notice if moving out.' },
-  ].map(x => ({ ...x, phone: '', id: uid() }));
+  ].map(x => ({ ...x, phone: '', id: uid(), updatedAt: now() }));
   items = items.concat(samples);
   saveItems();
   render();
@@ -439,7 +464,7 @@ $('#loadSamples').addEventListener('click', loadSamples);
 $('#clearAll').addEventListener('click', () => {
   if (!items.length) return;
   if (confirm(`Delete all ${items.length} items?\n\nExport a backup first if you want to keep them.`)) {
-    items = [];
+    removeItems(items.map(x => x.id));
     saveItems();
     render();
     $('#menuDlg').close();
