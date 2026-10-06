@@ -51,7 +51,7 @@ Deno.serve(async req => {
       try {
         await webpush.sendNotification(
           { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-          JSON.stringify({ title: item.name, body: message(days, item), tag: row.id }),
+          JSON.stringify({ title: item.name, body: message(days, item), tag: row.id, category: item.category }),
           { TTL: 60 * 60 * 12 });
       } catch (e) {
         // 404/410: the device unsubscribed or the app was uninstalled. Stop sending to it.

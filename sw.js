@@ -3,7 +3,7 @@
 // while online, and the cached copy is used when offline (or when the network is too slow).
 // Supabase API calls are never cached; sync.js handles being offline.
 
-const CACHE = 'renewals-v2';
+const CACHE = 'renewals-v3';
 const SUPABASE_JS = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js';
 const SHELL = [
   './', 'index.html', 'styles.css', 'app.js', 'sync.js', 'push.js', 'manifest.webmanifest',
@@ -39,12 +39,39 @@ self.addEventListener('fetch', event => {
 // The tag is the item's id, so a newer reminder for an item replaces the older one.
 self.addEventListener('push', event => {
   const msg = event.data?.json() || {};
-  event.waitUntil(self.registration.showNotification(msg.title || 'Renewals', {
+  event.waitUntil((async () => self.registration.showNotification(msg.title || 'Renewals', {
     body: msg.body || '',
     tag: msg.tag,
-    icon: 'icons/icon-192.png',
-  }));
+    icon: await categoryIcon(msg.category),
+  }))());
 });
+
+// Same emoji as CATEGORIES in app.js.
+const CATEGORY_ICONS = { vehicle: '🚗', insurance: '🛡️', id: '🪪', home: '🏠', other: '📌' };
+
+// The item's category emoji on a tile like the list's, drawn here so it uses this device's emoji
+// font and matches what the app shows. Falls back to the app icon.
+async function categoryIcon(category) {
+  const emoji = CATEGORY_ICONS[category];
+  try {
+    if (!emoji) throw new Error('No category');
+    const size = 192;
+    const canvas = new OffscreenCanvas(size, size);
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#f6f5f2';
+    ctx.fillRect(0, 0, size, size);
+    ctx.font = `${size / 2}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(emoji, size / 2, size / 2 + size * 0.03);
+    const bytes = new Uint8Array(await (await canvas.convertToBlob({ type: 'image/png' })).arrayBuffer());
+    let binary = '';
+    for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+    return 'data:image/png;base64,' + btoa(binary);
+  } catch {
+    return 'icons/icon-192.png';
+  }
+}
 
 // Tapping a reminder opens the app, or brings it forward if it's already open.
 self.addEventListener('notificationclick', event => {
