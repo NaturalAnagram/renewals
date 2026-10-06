@@ -3,7 +3,7 @@
 // while online, and the cached copy is used when offline (or when the network is too slow).
 // Supabase API calls are never cached; sync.js handles being offline.
 
-const CACHE = 'renewals-v3';
+const CACHE = 'renewals-v4';
 const SUPABASE_JS = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js';
 const SHELL = [
   './', 'index.html', 'styles.css', 'app.js', 'sync.js', 'push.js', 'manifest.webmanifest',
@@ -49,8 +49,8 @@ self.addEventListener('push', event => {
 // Same emoji as CATEGORIES in app.js.
 const CATEGORY_ICONS = { vehicle: '🚗', insurance: '🛡️', id: '🪪', home: '🏠', other: '📌' };
 
-// The item's category emoji on a tile like the list's, drawn here so it uses this device's emoji
-// font and matches what the app shows. Falls back to the app icon.
+// The item's category emoji on a round tile in the list's tile color, drawn here so it uses this
+// device's emoji font and matches what the app shows. Falls back to the app icon.
 async function categoryIcon(category) {
   const emoji = CATEGORY_ICONS[category];
   try {
@@ -59,7 +59,8 @@ async function categoryIcon(category) {
     const canvas = new OffscreenCanvas(size, size);
     const ctx = canvas.getContext('2d');
     ctx.fillStyle = '#f6f5f2';
-    ctx.fillRect(0, 0, size, size);
+    ctx.arc(size / 2, size / 2, size / 2, 0, 2 * Math.PI);
+    ctx.fill();
     ctx.font = `${size / 2}px sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
