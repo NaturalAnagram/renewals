@@ -152,11 +152,11 @@ async function sendLink(email) {
 }
 
 async function signOut() {
-  if (!confirm('Sign out?\n\nYour items stay in your account and are removed from this device.')) return;
+  if (!await ask('Sign out?\n\nYour items stay in your account and are removed from this device.', { ok: 'Sign out' })) return;
   clearTimeout(sync.timer);
   await syncNow();
   if (sync.version !== sync.syncedVersion &&
-      !confirm("Some changes on this device haven't synced yet and will be lost. Sign out anyway?")) return;
+      !await ask("Some changes on this device haven't synced yet and will be lost. Sign out anyway?", { ok: 'Sign out', danger: true })) return;
   // Reminders for this account shouldn't keep arriving on a signed-out device.
   await disablePush().catch(e => console.error("Couldn't turn off notifications", e));
   await sb.auth.signOut({ scope: 'local' });

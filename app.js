@@ -223,6 +223,24 @@ function renderItem(it) {
     </div>`;
 }
 
+// In-app replacement for confirm()/alert(), which browsers prefix with "<site> says".
+// Resolves true for OK, false for Cancel / Escape.
+function ask(message, { ok = 'OK', cancel = 'Cancel', danger = false } = {}) {
+  const dlg = $('#askDlg');
+  $('#askMsg').textContent = message;
+  $('#askOk').textContent = ok;
+  $('#askOk').classList.toggle('danger', danger);
+  $('#askCancel').textContent = cancel;
+  $('#askCancel').hidden = cancel === null;
+  dlg.returnValue = '';
+  dlg.showModal();
+  $('#askOk').focus();
+  return new Promise(resolve =>
+    dlg.addEventListener('close', () => resolve(dlg.returnValue === 'ok'), { once: true }));
+}
+
+const tell = message => ask(message, { cancel: null });
+
 function showBanner(message) {
   $('#banner').innerHTML = message
     ? `<div class="banner"><span>${esc(message)}</span><button data-action="dismiss-banner" aria-label="Dismiss">✕</button></div>`
@@ -288,7 +306,7 @@ $('#cancelEdit').addEventListener('click', () => $('#editDlg').close());
 
 // ---------- list & filter interactions ----------
 
-document.addEventListener('click', e => {
+document.addEventListener('click', async e => {
   const el = e.target.closest('[data-toggle],[data-edit],[data-delete],[data-renew],[data-status],[data-action]');
   if (!el) return;
   const d = el.dataset;
@@ -300,13 +318,13 @@ document.addEventListener('click', e => {
     openEditor(d.edit);
   } else if (d.delete) {
     const it = items.find(x => x.id === d.delete);
-    if (confirm(`Delete "${it.name}"?`)) {
+    if (await ask(`Delete "${it.name}"?`, { ok: 'Delete', danger: true })) {
       removeItems([d.delete]);
       saveItems();
       render();
     }
   } else if (d.renew) {
-    markRenewed(items.find(x => x.id === d.renew));
+    await markRenewed(items.find(x => x.id === d.renew));
   } else if (d.status) {
     ui.status = ui.status === d.status ? '' : d.status;
     render();
@@ -319,11 +337,11 @@ document.addEventListener('click', e => {
   }
 });
 
-function markRenewed(it) {
+async function markRenewed(it) {
   // Roll forward one cycle from the current expiry; if it's long overdue, keep rolling until it's in the future.
   let next = addMonths(it.expires, it.cycle);
   while (daysUntil(next) < 0) next = addMonths(next, it.cycle);
-  if (confirm(`Mark "${it.name}" as renewed?\n\nNew expiry: ${formatDate(next)}\n(You can edit the exact date afterwards.)`)) {
+  if (await ask(`Mark "${it.name}" as renewed?\n\nNew expiry: ${formatDate(next)}\n(You can edit the exact date afterwards.)`, { ok: 'Mark renewed' })) {
     it.expires = next;
     it.updatedAt = now();
     saveItems();
@@ -366,8 +384,9 @@ $('#fileIn').addEventListener('change', async e => {
       .filter(x => x && typeof x.name === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(x.expires));
     if (!incoming.length) throw new Error('no items');
 
-    const replace = items.length === 0 || confirm(
-      `Found ${incoming.length} item(s).\n\nOK = replace your current ${items.length} item(s)\nCancel = add them to your current list`);
+    const replace = items.length === 0 || await ask(
+      `Found ${incoming.length} item(s).\n\nReplace your current ${items.length} item(s), or add them to your list?`,
+      { ok: 'Replace', cancel: 'Add to list' });
     const cleaned = incoming.map(x => ({ ...x, id: replace && x.id ? x.id : uid(), updatedAt: now() }));
     if (replace) removeItems(items.map(x => x.id).filter(id => !cleaned.some(x => x.id === id)));
     items = items.filter(x => !cleaned.some(c => c.id === x.id)).concat(cleaned);
@@ -376,13 +395,13 @@ $('#fileIn').addEventListener('change', async e => {
     render();
     $('#menuDlg').close();
   } catch {
-    alert("That file doesn't look like a Renewals backup.");
+    tell("That file doesn't look like a Renewals backup.");
   }
 });
 
 $('#exportIcs').addEventListener('click', () => {
   const upcoming = items.filter(it => daysUntil(it.expires) >= 0);
-  if (!upcoming.length) return alert('No upcoming items to export.');
+  if (!upcoming.length) return tell('No upcoming items to export.');
 
   const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
   const icsText = s => String(s || '').replace(/[\\;,]/g, m => '\\' + m).replace(/\r?\n/g, '\\n');
@@ -461,9 +480,9 @@ function loadSamples() {
 
 $('#loadSamples').addEventListener('click', loadSamples);
 
-$('#clearAll').addEventListener('click', () => {
+$('#clearAll').addEventListener('click', async () => {
   if (!items.length) return;
-  if (confirm(`Delete all ${items.length} items?\n\nExport a backup first if you want to keep them.`)) {
+  if (await ask(`Delete all ${items.length} items?\n\nExport a backup first if you want to keep them.`, { ok: 'Delete all', danger: true })) {
     removeItems(items.map(x => x.id));
     saveItems();
     render();
