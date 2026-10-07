@@ -24,7 +24,8 @@ const TEMPLATES = [
 ];
 
 const STATUS_LABEL = { expired: 'Expired', soon: 'Renew now', upcoming: 'Coming up', ok: 'OK' };
-const UPCOMING_DAYS = 90;
+// "Coming up" starts at twice the reminder window, with the extra lead time kept between 30 and 90 days.
+const UPCOMING_MIN = 30, UPCOMING_MAX = 90;
 // List order: most urgent status first, then soonest expiry within each status.
 const STATUS_RANK = { expired: 0, soon: 1, upcoming: 2, ok: 3 };
 
@@ -132,8 +133,9 @@ function cycleText(months) {
 function statusOf(item) {
   const days = daysUntil(item.expires);
   if (days < 0) return 'expired';
-  if (days <= (Number(item.remind) || 0)) return 'soon';
-  if (days <= UPCOMING_DAYS) return 'upcoming';
+  const remind = Number(item.remind) || 0;
+  if (days <= remind) return 'soon';
+  if (days <= remind + Math.min(Math.max(remind, UPCOMING_MIN), UPCOMING_MAX)) return 'upcoming';
   return 'ok';
 }
 

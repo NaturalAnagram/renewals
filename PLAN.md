@@ -25,7 +25,7 @@ Decisions so far:
 | Notes | no | "Need emissions test + proof of insurance" |
 
 **Status is calculated from the date** (it's never stored), and each status gets its own color:
-🔴 Expired · 🟠 Renew now (inside the item's reminder window) · 🟡 Coming up (≤ 90 days) · 🟢 OK
+🔴 Expired · 🟠 Renew now (inside the item's reminder window) · 🟡 Coming up (twice the reminder window, with 30–90 days of extra lead time) · 🟢 OK
 
 ## Screens (mobile-first, also works on desktop)
 1. **Dashboard**
@@ -69,7 +69,7 @@ Decisions so far:
 
 ## Verification
 - Add, edit, and delete items. Data is still there after a page reload.
-- Status colors are right for items that are expired, due within the reminder window, ≤ 90 days, and later.
+- Status colors are right for items that are expired, due within the reminder window, coming up, and later.
 - "Mark renewed" moves the date forward correctly, including month-end dates (Jan 31 + 1 mo → Feb 28/29).
 - Search, category filter, and the summary-tile filters all work.
 - A JSON export re-imports without losing anything. The .ics file imports into Apple/Google Calendar with alerts.
