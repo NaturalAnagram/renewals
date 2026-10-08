@@ -40,3 +40,12 @@ To test without waiting for 9 AM, call the function with `?anyHour=1` and the cr
 ```bash
 curl -X POST "https://mwalbyzlcfbonuqgfule.supabase.co/functions/v1/send-reminders?anyHour=1" -H "Authorization: Bearer $(grep CRON_SECRET .secrets/push.env | cut -d= -f2)"
 ```
+
+## Keeping the database awake
+Supabase pauses free-tier projects after 7 days without activity. A GitHub Actions workflow,
+`.github/workflows/keepalive.yml`, calls a tiny `keepalive()` database function every 3 days to
+prevent that. One-time setup: run `supabase/keepalive.sql` in the **SQL Editor**, then run the
+workflow once by hand from the repo's **Actions** tab to check it succeeds.
+
+GitHub turns off scheduled workflows in a public repo after 60 days with no commits (it emails a
+warning first); re-enable it from the Actions tab, or push any commit.
